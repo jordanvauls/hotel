@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace HotelManagementSystem
 {
-    public partial class FinalizePayment : MetroForm
+    public partial class FinalizePayment : MetroFramework.Forms.MetroForm
     {
         public FinalizePayment()
         {
@@ -69,10 +69,10 @@ namespace HotelManagementSystem
 
             double totalWithTax = Convert.ToDouble(totalAmountFromFrontend) * 0.07;
             double FinalTotal = Convert.ToDouble(totalAmountFromFrontend) + totalWithTax + foodBill;
-            currentBillAmount.Text = "$" + Convert.ToString(totalAmountFromFrontend) + " USD";
-            foodBillAmount.Text = "$" + Convert.ToString(foodBill) + " USD";
-            taxAmount.Text = "$" + Convert.ToString(totalWithTax) + " USD";
-            totalAmount.Text = "$" + Convert.ToString(FinalTotal) + " USD";
+            currentBillAmount.Text = "£" + Convert.ToString(totalAmountFromFrontend) + " GBP";
+            foodBillAmount.Text = "£" + Convert.ToString(foodBill) + "GBP";
+            taxAmount.Text = "£" + Convert.ToString(totalWithTax) + " GBP";
+            totalAmount.Text = "£" + Convert.ToString(FinalTotal) + " GBP";
             FinalTotalFinalized = FinalTotal;
 
         }

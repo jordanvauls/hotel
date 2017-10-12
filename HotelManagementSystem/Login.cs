@@ -1,9 +1,16 @@
 ﻿using System;
-using System.Configuration;
+using System.IO;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
-using System.Data.SqlClient;
-
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.VisualBasic;
+using System.Drawing.Printing;
+using System.Data.SqlClient;
 
 namespace HotelManagementSystem
 {
@@ -14,89 +21,156 @@ namespace HotelManagementSystem
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void Login_Load(object sender, EventArgs e)
         {
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            metroLabel1.Text = String.Format("My Application Version {0}", version);
+           
+
         }
 
-        private void usernameTextBox_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
-            if (usernameTextBox.Text == string.Empty)
-            {
-                usernameLabel.Visible = true;
-            }
-            if (usernameTextBox.Text != "Username" && usernameTextBox.Text != string.Empty)
-            {
-                usernameLabel.Visible = false;
-            }
-        }
-        public bool verifier(string tableName, string username, string password)
-        {
-          
-            bool success = false;
-            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Con"].ConnectionString);
-            string sql = "SELECT* FROM " + tableName + " WHERE user_name=@userName AND pass_word=@password";
-            try
-            {
-                SqlCommand sqlCommand = new SqlCommand(sql, connection);
-                sqlCommand.CommandText = sql;
-                SqlParameter UsernameParametar = new SqlParameter("@username", SqlDbType.VarChar);
-                SqlParameter PassParametar = new SqlParameter("@password", SqlDbType.VarChar);
-                sqlCommand.Parameters.Add(UsernameParametar);
-                sqlCommand.Parameters.Add(PassParametar);
-                UsernameParametar.Value = username;
-                PassParametar.Value = password;
-                connection.Open();
-                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
-
-                if (sqlReader.HasRows)
-                    success = true;
-                connection.Close();
-            }
-            catch (Exception e)
-            {
-                MetroFramework.MetroMessageBox.Show(this, e.ToString(), "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
-            }
-            return success;
-        }
-        private void passwordTextBox_Click(object sender, EventArgs e)
-        {
-            if (passwordTextBox.Text == string.Empty)
-            {
-                passwordLabel.Visible = true;
-            }
-            if (passwordTextBox.Text != "Password" && passwordTextBox.Text != string.Empty)
-            {
-                passwordLabel.Visible = false;
-            }
+            textBoxCode.Text = textBoxCode.Text + "1";
         }
 
-        private void signinButton_Click(object sender, EventArgs e)
+        private void timer1_Tick(object sender, EventArgs e)
         {
-            try
+            labelDate.Text = DateTime.Now.ToString("MMMM dd, yyyy") + Environment.NewLine + DateTime.Now.ToString("HH:mm:ss");
+        }
+
+        private void buttonDel_Click(object sender, EventArgs e)
+        {
+            if (textBoxCode.Text.Length >= 1)
+            { textBoxCode.Text = textBoxCode.Text.Remove(textBoxCode.Text.Length - 1); }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "2";
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "3";
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "4";
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "5";
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "6";
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "7";
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "8";
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "9";
+        }
+
+        private void button0_Click(object sender, EventArgs e)
+        {
+            textBoxCode.Text = textBoxCode.Text + "0";
+        }
+
+        private void buttonManager_Click(object sender, EventArgs e)
+        {
+            ManagerLogin managerLogin = new ManagerLogin("ManagerMenu");
+            managerLogin.ShowDialog();
+;
+            textBoxCode.Text = "";
+        }
+
+        private void buttonNosale_Click(object sender, EventArgs e)
+        {
+            ManagerLogin managerLogin = new ManagerLogin("NoSale");
+            managerLogin.ShowDialog();
+            textBoxCode.Text = "";
+        }
+
+        private void buttonClockin_Click(object sender, EventArgs e)
+        {
+            ClockPage clock = new ClockPage();
+            clock.ShowDialog();
+            textBoxCode.Text = "";
+        }
+
+        public void buttonContinue_Click(object sender, EventArgs e)
+        {
+            if (textBoxCode.Text != "")
             {
-                if (verifier("frontend".Trim(), usernameTextBox.Text.Trim(), passwordTextBox.Text.Trim()))
+                Globals.TryLogin(textBoxCode.Text);
+                if (Globals.Username != "")
                 {
-                    this.Hide();
-                    Hotel_Manager.Form1 hotel_management = new Hotel_Manager.Form1();
-                    hotel_management.Show();
+                    int ClockIn = Globals.CheckClock(Globals.Userno, "In");
+                    int ClockOut = Globals.CheckClock(Globals.Userno, "Out");
+                    if (ClockIn > 0)
+                    {
+                        if (ClockOut > 0)
+                        {
+                            MessageBox.Show("You are not Clocked In");
+                            textBoxCode.Text = "";
+                        }
+                       else if(Globals.UserArea.Trim() == "Bar")
+                        {
+                            Globals.MenuNo = 1;
+                            SaleScreen sales = new SaleScreen();
+                            sales.ShowDialog();
+                            textBoxCode.Text = "";
+                            this.Close();
+                        }
+                        else if (Globals.UserArea.Trim() == "Reception")
+                        {
+                            Hotel_Manager.Form1 Reception = new Hotel_Manager.Form1();
+                            Reception.ShowDialog();
+                            this.Close();
+                        }
+                        else if(Globals.UserArea.Trim() == "Kitchen")
+                        {
+                            KitchenStock Kitchen = new KitchenStock();
+                            Kitchen.ShowDialog();
+                            this.Close();
+                        }
+                        else if (Globals.UserArea.Trim() == "Restaurant")
+                        {
+
+                            Restaurant Kitchen = new Restaurant();
+                            Kitchen.ShowDialog();
+                            this.Close();
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("You are not Clocked In");
+                        textBoxCode.Text = "";
+                    }
                 }
-                //else if (verifier("kitchen".Trim(), usernameTextBox.Text.Trim(), passwordTextBox.Text.Trim()))
-                //{
-                //    this.Hide();
-                //    Kitchen kitchen_management = new Kitchen();
-                //    kitchen_management.Show();
-                //}
                 else
                 {
-                    MetroFramework.MetroMessageBox.Show(this, "Username or Password is wrong, try again", "Login Failed", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
+                    MessageBox.Show("Incorrect Login Code");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                MetroFramework.MetroMessageBox.Show(this, ex.ToString(), "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
+                MessageBox.Show("Please Enter Login Code");
             }
         }
+
+
     }
 }

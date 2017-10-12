@@ -6,17 +6,23 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Data.SqlClient;
 using System.Configuration;
+using Twilio;
 using Twilio.Clients;
 using Twilio.Types;
 using Twilio.Rest.Api.V2010.Account;
+using HotelManagementSystem;
+using System.Net.Mail;
+using Twilio.Http;
 
 namespace Hotel_Manager
 {
     public partial class Form1 : MetroForm
     {
-        string AccountSid = "SKa0bd6d36f849c25682611d19da16d955";
-        string AuthToken = "mE1tuToD9huuGYpN1Aohgh7qat481EEB";
+        List<ListObject> theList = new List<ListObject>();
+        string AccountSid = "AC3318da2aaef3742bf4a0706505fd1825";
+        string AuthToken = "b533e3719a0220f60f501e67f3432fa7";
         string RecvPhoneNumber = "";
+        string email = "j.vauls5774@student.leedsbeckett.ac.uk";
         public Form1()
         {
             InitializeComponent();
@@ -35,8 +41,7 @@ namespace Hotel_Manager
             this.roomReservedListBox.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.roomReservedListBox_DrawItem);
         }
 
-
-
+       
         private void roomOccupiedListBox_DrawItem(object sender, System.Windows.Forms.DrawItemEventArgs e)
         {
             this.roomOccupiedListBox.IntegralHeight = false;
@@ -106,7 +111,39 @@ namespace Hotel_Manager
             foodSupplyCheckBox.Enabled = false;
 
         }
+        public string SendMail(string toList, string from, string ccList, string subject, string body)
+        {
 
+            MailMessage message = new MailMessage();
+            SmtpClient smtpClient = new SmtpClient();
+            string msg = string.Empty;
+            try
+            {
+                MailAddress fromAddress = new MailAddress(from);
+                message.From = fromAddress;
+                message.To.Add(toList);
+                if (ccList != null && ccList != string.Empty)
+                    message.CC.Add(ccList);
+                message.Subject = subject;
+                message.IsBodyHtml = true;
+                message.Body = body;
+                // We use gmail as our smtp client
+                smtpClient.Host = "smtp.gmail.com";
+                smtpClient.Port = 587;
+                smtpClient.EnableSsl = true;
+                smtpClient.UseDefaultCredentials = true;
+                smtpClient.Credentials = new System.Net.NetworkCredential(
+                    "j.vauls5774@student.leedsbeckett.ac.uk", "B0urbonSt");
+
+                smtpClient.Send(message);
+                msg = "Successful<BR>";
+            }
+            catch (Exception ex)
+            {
+                msg = ex.Message;
+            }
+            return msg;
+        }
 
         private void SendSMS(int secondUserID)
         {
@@ -119,10 +156,11 @@ namespace Hotel_Manager
 
             if (smsCheckBox.Checked)
             {
+                TwilioClient.Init(AccountSid, AuthToken);
                 //building message for twilio
                 string buildMesage = "Hello " + name + "! Your unique ID# " + secondUserID + " Total bill of £" + finalizedTotalAmount + " is charged on your card # ending-" + end_num;
                 //creating message 
-                var to = new PhoneNumber(RecvPhoneNumber);
+                var to = new PhoneNumber(phoneNumberTextBox.Text);
                 var message = MessageResource.Create(
                     to,
                     from: new PhoneNumber("+441158244592"),
@@ -193,7 +231,7 @@ namespace Hotel_Manager
             }
             updateButton.Enabled = true;
 
-            HotelManagementSystem.FinalizePayment finalizebil = new HotelManagementSystem.FinalizePayment();
+            FinalizePayment finalizebil = new FinalizePayment();
             finalizebil.totalAmountFromFrontend = totalAmount;
             finalizebil.foodBill = foodBill;
             if (taskFinder)
@@ -224,7 +262,7 @@ namespace Hotel_Manager
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            UserName.Text = "Logged In: " + Globals.Username;
         }
         private void RoomOccupiedListBox_DrawItem(object sender, System.Windows.Forms.DrawItemEventArgs e)
         {
@@ -303,7 +341,8 @@ namespace Hotel_Manager
         }
         private void phoneNumberTextBox_Leave(object sender, EventArgs e)
         {
-            RecvPhoneNumber = "+1" + phoneNumberTextBox.Text.Replace(" ", string.Empty);
+
+            RecvPhoneNumber = phoneNumberTextBox.Text.Replace(" ", string.Empty);
             long getphn = Convert.ToInt64(phoneNumberTextBox.Text);
             string formatString = String.Format("{0:(000)000-0000}", getphn);
             phoneNumberTextBox.Text = formatString;
@@ -311,56 +350,53 @@ namespace Hotel_Manager
         private void foodMenuButton_Click(object sender, EventArgs e)
         {
 
-            //FoodMenu food_menu = new FoodMenu();
-            //if (taskFinder)
-            //{
-            //    if (breakfast > 0)
-            //    {
-            //        food_menu.breakfastCheckBox.Checked = true;
-            //        food_menu.breakfastQTY.Text = Convert.ToString(breakfast);
-            //    }
-            //    if (lunch > 0)
-            //    {
-            //        food_menu.lunchCheckBox.Checked = true;
+            HotelManagementSystem.r food_menu = new HotelManagementSystem.r();
+            if (taskFinder)
+            {
+                if (breakfast > 0)
+                {
+                    food_menu.breakfastCheckBox.Checked = true;
+                    food_menu.breakfastQTY.Text = Convert.ToString(breakfast);
+                }
+                if (lunch > 0)
+                {
+                    food_menu.lunchCheckBox.Checked = true;
 
-            //        food_menu.lunchQTY.Text = Convert.ToString(lunch);
-            //    }
-            //    if (dinner > 0)
-            //    {
-            //        food_menu.dinnerCheckBox.Checked = true;
-            //        food_menu.dinnerQTY.Text = Convert.ToString(dinner);
-            //    }
-            //    if (cleaning == "1")
-            //    {
-            //        food_menu.cleaningCheckBox.Checked = true;
-            //    }
-            //    if (towel == "1")
-            //    {
-            //        food_menu.towelsCheckBox.Checked = true;
-            //    }
-            //    if (surprise == "1")
-            //    {
-            //        food_menu.surpriseCheckBox.Checked = true;
-            //    }
-            //}
-            //food_menu.ShowDialog();
+                    food_menu.lunchQTY.Text = Convert.ToString(lunch);
+                }
+                if (dinner > 0)
+                {
+                    food_menu.dinnerCheckBox.Checked = true;
+                    food_menu.dinnerQTY.Text = Convert.ToString(dinner);
+                }
+                if (cleaning == "1")
+                {
+                    food_menu.cleaningCheckBox.Checked = true;
+                }
+                if (towel == "1")
+                {
+                    food_menu.towelsCheckBox.Checked = true;
+                }
+            
+            }
+            food_menu.ShowDialog();
 
-            //breakfast = food_menu.BreakfastQ;
-            //lunch = food_menu.LunchQ;
-            //dinner = food_menu.DinnerQ;
+            breakfast = food_menu.BreakfastQ;
+            lunch = food_menu.LunchQ;
+            dinner = food_menu.DinnerQ;
 
-            //cleaning = food_menu.Cleaning.Replace(" ", string.Empty) == "Cleaning" ? "1" : "0";
-            //towel = food_menu.Towel.Replace(" ", string.Empty) == "Towels" ? "1" : "0";
+            cleaning = food_menu.Cleaning.Replace(" ", string.Empty) == "Cleaning" ? "1" : "0";
+            towel = food_menu.Towel.Replace(" ", string.Empty) == "Towels" ? "1" : "0";
 
-            //surprise = food_menu.Surprise.Replace(" ", string.Empty) == "Sweetestsurprise" ? "1" : "0";
+            surprise = food_menu.Surprise.Replace(" ", string.Empty) == "Sweetestsurprise" ? "1" : "0";
 
-            //if (breakfast > 0 || lunch > 0 || dinner > 0)
-            //{
-            //    int bfast = 7 * breakfast;
-            //    int Lnch = 15 * lunch;
-            //    int di_ner = 15 * dinner;
-            //    foodBill = bfast + Lnch + di_ner;
-            //}
+            if (breakfast > 0 || lunch > 0 || dinner > 0)
+            {
+                int bfast = 7 * breakfast;
+                int Lnch = 15 * lunch;
+                int dinner2 = 15 * dinner;
+                foodBill = bfast + Lnch + dinner2;
+            }
         }
 
         private void editButton_Click(object sender, EventArgs e)
@@ -368,11 +404,11 @@ namespace Hotel_Manager
 
             editClicked = true;
             entryDatePicker.MinDate = new DateTime(2014, 4, 1);
-            entryDatePicker.CustomFormat = "MM-dd-yyyy";
+            entryDatePicker.CustomFormat = "dd-MM-yyyy";
             entryDatePicker.Format = DateTimePickerFormat.Custom;
 
             depDatePicker.MinDate = new DateTime(2014, 4, 1);
-            depDatePicker.CustomFormat = "MM-dd-yyyy";
+            depDatePicker.CustomFormat = "dd-MM-yyyy";
             depDatePicker.Format = DateTimePickerFormat.Custom;
 
             submitButton.Visible = false;
@@ -458,10 +494,10 @@ namespace Hotel_Manager
                     string supply_status = reader["supply_status"].ToString();
                     string food_billD = reader["food_bill"].ToString();
 
-                    string arrival_date = Convert.ToDateTime(reader["arrival_time"]).ToString("MM-dd-yyyy").Replace(" ", string.Empty);
+                    string arrival_date = Convert.ToDateTime(reader["arrival_time"]).ToString("dd-MM-yyyy").Replace(" ", string.Empty);
                     entryDatePicker.Value = Convert.ToDateTime(arrival_date);
 
-                    string leaving_date = Convert.ToDateTime(reader["leaving_time"]).ToString("MM-dd-yyyy").Replace(" ", string.Empty);
+                    string leaving_date = Convert.ToDateTime(reader["leaving_time"]).ToString("dd-MM-yyyy").Replace(" ", string.Empty);
                     depDatePicker.Value = Convert.ToDateTime(leaving_date);
                     entryDatePicker.Value.ToShortDateString();
                     depDatePicker.Value.ToShortDateString();
@@ -525,10 +561,10 @@ namespace Hotel_Manager
                     emailTextBox.Text = email_address;
                     qtGuestComboBox.SelectedItem = number_guest;
                     addLabel.Text = street_address;
-                    aptTextBox.Text = apt_suite;
+
                     cityTextBox.Text = city;
                     stateComboBox.SelectedItem = state;
-                    zipComboBox.Text = zip_code;
+                    stateComboBox.Text = zip_code;
                     roomTypeComboBox.SelectedItem = room_type.Replace(" ", string.Empty);
                     floorComboBox.SelectedItem = room_floor.Replace(" ", string.Empty);
                     roomNComboBox.SelectedItem = room_number.Replace(" ", string.Empty);
@@ -544,6 +580,7 @@ namespace Hotel_Manager
 
 
                     primartyID = Convert.ToInt32(ID);
+                    Globals.IDNo = primartyID;
                 }
                 connection.Close();
             }
@@ -570,15 +607,15 @@ namespace Hotel_Manager
         {
             birthday = (monthComboBox.SelectedItem) + "-" + (dayComboBox.SelectedIndex + 1) + "-" + yearTextBox.Text;
             Int32 getIDBack = 0;
-            string query = "insert into reservation(first_name, last_name, birth_day, gender, phone_number, email_address, number_guest, street_address, apt_suite,city, state, zip_code, room_type, room_floor, room_number, total_bill,payment_type, card_type, card_number,card_exp,card_cvc, arrival_time, leaving_time, check_in, break_fast, lunch, dinner, supply_status, cleaning, towel, s_surprise, food_bill) values('" + firstNameTextBox.Text +
+            string query = "insert into reservation(first_name, last_name, birth_day, gender, phone_number, email_address, number_guest, street_address,city, state, zip_code, room_type, room_floor, room_number, total_bill,payment_type, card_type, card_number,card_exp,card_cvc, arrival_time, leaving_time, check_in, break_fast, lunch, dinner, supply_status, cleaning, towel, s_surprise, food_bill, Staff_ID) values('" + firstNameTextBox.Text +
               "', '" + lastNameTextBox.Text + "', '" + birthday + "', '" + genderComboBox.SelectedItem + "', '" + phoneNumberTextBox.Text + "', '" + emailTextBox.Text +
-              "', '" + (qtGuestComboBox.SelectedIndex + 1) + "', '" + addLabel.Text + "', '" + aptTextBox.Text + "', '" + cityTextBox.Text +
+              "', '" + (qtGuestComboBox.SelectedIndex + 1) + "', '" + addLabel.Text + "', '" + cityTextBox.Text +
               "', '" + stateComboBox.SelectedItem + "', '" + zipComboBox.Text + "', '" + roomTypeComboBox.SelectedItem + "', '" + floorComboBox.SelectedItem +
               "', '" + roomNComboBox.SelectedItem + "', '" + finalizedTotalAmount + "', '" + paymentType +
               "', '" + CardType + "','" + paymentCardNumber + "','" + MM_YY_Of_Card + "','" + CVC_Of_Card + "', '" + entryDatePicker.Text + "', '" + depDatePicker.Text + "','" + checkin +
-              "', '" + breakfast + "','" + lunch + "','" + dinner + "', '" + foodStatus + "', '" + Convert.ToInt32(cleaning) + "', '" + Convert.ToInt32(towel) + "', '" + Convert.ToInt32(surprise) + "','" + foodBill + "');";
+              "', '" + breakfast + "','" + lunch + "','" + dinner + "', '" + foodStatus + "', '" + Convert.ToInt32(cleaning) + "', '" + Convert.ToInt32(towel) + "', '" + Convert.ToInt32(surprise) + "','" + foodBill + "','" +Globals.Userno+"');";
             query += "SELECT CAST(scope_identity() AS int)";
-            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Con"].ConnectionString);
+            SqlConnection connection = new SqlConnection(Globals.dataconnection);
 
             SqlCommand query_table = new SqlCommand(query, connection);
             try
@@ -680,10 +717,10 @@ namespace Hotel_Manager
                     string supply_status = reader["supply_status"].ToString();
                     string food_billD = reader["food_bill"].ToString();
 
-                    string arrival_date = Convert.ToDateTime(reader["arrival_time"]).ToString("MM-dd-yyyy").Replace(" ", string.Empty);
+                    string arrival_date = Convert.ToDateTime(reader["arrival_time"]).ToString("dd-MM-yyyy").Replace(" ", string.Empty);
                     entryDatePicker.Value = Convert.ToDateTime(arrival_date);
 
-                    string leaving_date = Convert.ToDateTime(reader["leaving_time"]).ToString("MM-dd-yyyy").Replace(" ", string.Empty);
+                    string leaving_date = Convert.ToDateTime(reader["leaving_time"]).ToString("dd-MM-yyyy").Replace(" ", string.Empty);
                     depDatePicker.Value = Convert.ToDateTime(leaving_date);
                     entryDatePicker.Value.ToShortDateString();
                     depDatePicker.Value.ToShortDateString();
@@ -747,10 +784,10 @@ namespace Hotel_Manager
                     emailTextBox.Text = email_address;
                     qtGuestComboBox.SelectedItem = number_guest;
                     addLabel.Text = street_address;
-                    aptTextBox.Text = apt_suite;
+
                     cityTextBox.Text = city;
                     stateComboBox.SelectedItem = state;
-                    zipComboBox.Text = zip_code;
+                    stateComboBox.Text = zip_code;
                     roomTypeComboBox.SelectedItem = room_type.Replace(" ", string.Empty);
                     floorComboBox.SelectedItem = room_floor.Replace(" ", string.Empty);
                     roomNComboBox.SelectedItem = room_number.Replace(" ", string.Empty);
@@ -777,18 +814,16 @@ namespace Hotel_Manager
 
         private void updateButton_Click(object sender, EventArgs e)
         {
-
             birthday = (monthComboBox.SelectedItem) + "-" + (dayComboBox.SelectedIndex + 1) + "-" + yearTextBox.Text;
             // MessageBox.Show(Convert.ToString(cleaning) + " " + Convert.ToString(towel) + " " + Convert.ToString(surprise));
             string query = "update reservation set first_name ='" + firstNameTextBox.Text +
               "', last_name ='" + lastNameTextBox.Text + "', birth_day='" + birthday + "', gender='" + genderComboBox.SelectedItem + "', phone_number='" + phoneNumberTextBox.Text + "', email_address='" + emailTextBox.Text +
-              "', number_guest='" + (qtGuestComboBox.SelectedIndex + 1) + "', street_address='" + addLabel.Text + "', apt_suite='" + aptTextBox.Text + "', city='" + cityTextBox.Text +
+              "', number_guest='" + (qtGuestComboBox.SelectedIndex + 1) + "', street_address='" + addLabel.Text + "', city='" + cityTextBox.Text +
               "', state='" + stateComboBox.SelectedItem + "', zip_code='" + zipComboBox.Text + "', room_type='" + roomTypeComboBox.SelectedItem + "', room_floor='" + floorComboBox.SelectedItem +
               "', room_number='" + roomNComboBox.SelectedItem + "', total_bill='" + finalizedTotalAmount + "', payment_type='" + paymentType +
               "', card_type ='" + CardType + "', card_number='" + paymentCardNumber + "',card_exp='" + MM_YY_Of_Card + "', card_cvc='" + CVC_Of_Card + "', arrival_time='" + entryDatePicker.Text + "', leaving_time='" + depDatePicker.Text + "', break_fast='" + breakfast +
               "', check_in='" + checkin + "', lunch='" + lunch + "', dinner='" + dinner + "', supply_status='" + foodStatus + "',cleaning='" + Convert.ToInt32(cleaning) + "',towel='" + Convert.ToInt32(towel) + "',s_surprise='" + Convert.ToInt32(surprise) + "',food_bill='" + foodBill + "' WHERE Id = '" + primartyID + "';";
-
-            SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Con"].ConnectionString);
+            SqlConnection connection = new SqlConnection(Globals.dataconnection);
 
             SqlCommand query_table = new SqlCommand(query, connection);
             SqlDataReader reader;
@@ -820,6 +855,8 @@ namespace Hotel_Manager
             ReservedRoom();
             getChecked();
         }
+    
+
 
         private void deleteButton_Click(object sender, EventArgs e)
         {
@@ -943,7 +980,6 @@ namespace Hotel_Manager
 
         private void GetOccupiedRoom()
         {
-
             roomOccupiedListBox.Items.Clear();
             string query = "Select * from reservation where check_in = '" + "True" + "';";
             SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Con"].ConnectionString);
@@ -979,6 +1015,41 @@ namespace Hotel_Manager
             }
 
         }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            Login loginpage = new Login();
+            loginpage.Show();
+        }
+
+        private void LogOut_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            Login loginpage = new Login();
+            loginpage.Show();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            labelDate.Text = DateTime.Now.ToString("MMMM dd, yyyy") + Environment.NewLine + DateTime.Now.ToString("HH:mm:ss");
+        }
+
+        private void leftMPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void floorComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+       
+        }
+
         private void roomOccupiedListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
 
@@ -988,7 +1059,8 @@ namespace Hotel_Manager
         {
             System.Windows.Forms.Application.Exit();
         }
-
+  
+  
         private void ComboBoxItemsFromDataBase()
         {
             string query = "Select * from reservation";
@@ -1063,8 +1135,8 @@ namespace Hotel_Manager
                     string last_name = reader["last_name"].ToString();
                     string phone_number = reader["phone_number"].ToString();
 
-                    string arrival_date = Convert.ToDateTime(reader["arrival_time"]).ToString("MM-dd-yyyy");
-                    string leaving_date = Convert.ToDateTime(reader["leaving_time"]).ToString("MM-dd-yyy");
+                    string arrival_date = Convert.ToDateTime(reader["arrival_time"]).ToString("dd-MM-yyyy");
+                    string leaving_date = Convert.ToDateTime(reader["leaving_time"]).ToString("dd-MM-yyy");
 
                     roomReservedListBox.Items.Add("[" + room_number.Replace(" ", string.Empty) + "]" +
                         " " + room_type.Replace(" ", string.Empty) +
